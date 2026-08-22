@@ -3,15 +3,29 @@ import java.util.*;
 import java.io.*;
 
 public class Message {
+    ArrayList<Message> msgList;
+
+    String author;
+    String subject;
+    String body;
+    int id;
 
 	// Default Constructor
 	public Message() {
-		
+        msgList = new ArrayList<Message>();
+        author = "";
+        subject = "";
+        body = "";
+        id = 0;
 	}
 	
 	// Parameterized Constructor
 	public Message(String auth, String subj, String bod, int i) {
-		
+        msgList = new ArrayList<Message>();
+		author = auth;
+        subject = subj;
+        body = bod;
+        id = i;
 	}
 
 	// This function is responsbile for printing the Message
@@ -29,17 +43,17 @@ public class Message {
 
 	// Default function for inheritance
 	public boolean isReply(){
-		
+		return false;
 	}
 
 	// Returns the subject String
 	public String getSubject(){
-		
+		return subject;
 	} 
 
 	// Returns the ID
 	public int getId(){
-		
+        return id;
 	}
 
 	// Adds a child pointer to the parent's childList.
