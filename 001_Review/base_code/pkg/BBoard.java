@@ -13,17 +13,35 @@ public class BBoard {		// This is your main file that connects all classes.
 	// Default constructor that creates a board with a defaulttitle, empty user and message lists,
 	// and no current user
 	public BBoard() {
-		
+		sc = new Scanner(System.in);
+		title = "Empty";
+		user = null;
+		msgList = new ArrayList<>();
+		userList = new ArrayList<>();
 	}
 
 	// Same as the default constructor except it sets the title of the board
-	public BBoard(String ttl) {	
+	public BBoard(String ttl) {
+		sc = new Scanner(System.in);
+		title = ttl;
+		user = null;
+		msgList = new ArrayList<>();
+		userList = new ArrayList<>();
 	}
 
 	// Gets a filename of a file that stores the user info in a given format (users.txt)
 	// Opens and reads the file of all authorized users and passwords
 	// Constructs a User object from each name/password pair, and populates the userList ArrayList.
 	public void loadUsers(String inputFile) throws FileNotFoundException {
+		File users = new File(inputFile);
+		Scanner scanner = new Scanner(users);
+
+		while(scanner.hasNextLine()) {
+			String scannedUser = scanner.nextLine();
+			String username = scannedUser.substring(0, scannedUser.indexOf(" "));
+			String password = scannedUser.substring(scannedUser.indexOf(" ") + 1);
+			userList.add(new User(username, password));
+		}
 
 	}
 
@@ -33,7 +51,31 @@ public class BBoard {		// This is your main file that connects all classes.
 	// If not, it will keep asking until a match is found or the user types 'q' or 'Q' as username to quit
 	// When the users chooses to quit, sayu "Bye!" and return from the login function
 	public void login(){
+		System.out.println(title);
 
+		while(true) {
+			System.out.print("Enter your username ('Q' or 'q' to quit): ");
+			String input = sc.nextLine();
+			if (input.equals("q") || input.equals("Q")) {
+				System.out.println("Bye!");
+				System.exit(0);
+			}
+
+			System.out.print("Enter your password: ");
+			String pass = sc.nextLine();
+
+			for(User i : userList) {
+				if (i.check(input, pass)) {
+					user = i;
+					System.out.println();
+					System.out.println("Welcome back " + user.getUsername() + "!");
+					System.out.println();
+					return;
+				}
+			}
+
+			System.out.println("Invalid Username or Password\n");
+		}
 	}
 	
 	// Contains main loop of Bulletin Board
@@ -47,33 +89,88 @@ public class BBoard {		// This is your main file that connects all classes.
 	// Q/q should reset the currentUser to 0 and then end return
 	// Note: if login() did not set a valid currentUser, function must immediately return without showing menu
 	public void run(){
+		this.login();
+		if (user != null) {
+			displayMenu();
+			String action = sc.nextLine();
+			System.out.println("");
 
+			while (!action.equalsIgnoreCase("Q")) {
+				switch (action.toUpperCase()) {
+					case "D":
+						this.display();
+						break;
+					case "N":
+						this.addTopic();
+						break;
+					case "R":
+						this.addReply();
+						break;
+					case "P":
+						this.setPassword();
+						break;
+					default:
+						System.out.println("Wrong Input - Please enter another.");
+						break;
+				}
+
+				System.out.println("");
+				displayMenu();
+				action = this.sc.nextLine();
+				System.out.println("");
+			}
+
+			System.out.println("Bye!");
+		}
 	}
 
-	// Traverse the BBoard's message list, and invote the print function on Topic objects ONLY
-	// It will then be the responsibility of the Topic object to invoke the print function recursively on its own replies
-	// The BBoard display function will ignore all reply objects in its message list
-	private void display(){
-
+	private void displayMenu() {
+		System.out.println("Menu");
+		System.out.println("  - Display Messages ('D' or 'd')");
+		System.out.println("  - Add New Topic ('N' or 'n')");
+		System.out.println("  - Add New Reply to a Topic ('R' or 'r')");
+		System.out.println("  - Change Password ('P' or 'p')");
+		System.out.println("  - Quit ('Q' or 'q')");
+		System.out.print("Choose an action: ");
 	}
 
+	// Traverse the BBoard message list and print only Topic objects.
+	// Each Topic is responsible for printing its nested replies recursively.
+	// Replies are ignored here.
+	public void display() {
+		if (msgList.isEmpty()) {
+			System.out.println("Nothing to Display");
+			return;
+		}
 
-	// This function asks the user to create a new Topic (i.e. the first message of a new discussion "thread")
-	// Every Topic includes a subject (single line), and body (single line)
+		for (Message message : msgList) {
+			if (!message.isReply()) {
+				System.out.println("--------------------------------------------");
+				System.out.print("Message #" + message.getId() + ": ");
+				message.print(0);
+				System.out.println("--------------------------------------------");
+			}
+		}
+	}
 
-	/* 
+	// Create a new Topic (the first message in a new discussion thread).
+	// Each Topic includes a subject and a body, each on a single line.
+	/*
 	Subject: "Thanks"
 	Body: "I love this bulletin board that you made!"
 	*/
 
-	// Each Topic also stores the username of currentUser; and message ID, which is (index of its Message + 1)
-
-	// For example, the first message on the board will be a Topic who's index will be stored at 0 in the messageList ArrayList,
-	// so its message ID will be (0+1) = 1
-	// Once the Topic has been constructed, add it to the messageList
-	// This should invoke your inheritance of Topic to Message
-	private void addTopic(){
-
+	// Each Topic also stores the username of currentUser and a message ID,
+	// where the ID is the message index + 1.
+	// For example, the first message in msgList has index 0,
+	// so its message ID is 1.
+	private void addTopic() {
+		System.out.print("Subject: ");
+		String subject = this.sc.nextLine();
+		System.out.print("Body: ");
+		String body = this.sc.nextLine();
+		Topic topic = new Topic(user.getUsername(), subject, body, msgList.size() + 1);
+		msgList.add(topic);
 	}
 
 	// This function asks the user to enter a reply to a given Message (which may be either a Topic or a Reply, so we can handle nested replies).
@@ -105,19 +202,57 @@ public class BBoard {		// This is your main file that connects all classes.
 	// Call the addChild function on the parent Message to push back the new Message (to the new Reply) to the parent's childList ArrayList.
 	// Finally, push back the Message created to the BBoard's messageList. 
 	// Note: When the user chooses to return to the menu, do not call run() again - just return fro mthis addReply function. 
-	private void addReply(){
+	public void addReply() {
+		System.out.print("Enter Message ID (-1 for Menu): ");
+		int messageId = sc.nextInt();
+		sc.nextLine();
 
+		while (messageId != -1 && (messageId <= 0 || messageId > this.msgList.size())) {
+			System.out.println("Invalid Message ID!");
+			System.out.print("Enter Message ID (-1 for Menu): ");
+			messageId = this.sc.nextInt();
+			this.sc.nextLine();
+		}
+
+		if (messageId == -1) return;
+
+		System.out.print("Body: ");
+		String body = this.sc.nextLine();
+
+		Message parentMessage = this.msgList.get(messageId - 1);
+		Reply reply = new Reply(user.getUsername(), ("Re: " + parentMessage.getSubject()), body, msgList.size() + 1);
+
+		msgList.add(reply);
+		parentMessage.addChild(reply);
 	}
 
-	// This function allows the user to change their current password.
-	// The user is asked to provide the old password of the currentUser.
-	// 		If the received password matches the currentUser password, then the user will be prompted to enter a new password.
-	// 		If the received password doesn't match the currentUser password, then the user will be prompted to re-enter the password. 
-	// 		The user is welcome to enter 'c' or 'C' to cancel the setting of a password and return to the menu.
-	// Any password is allowed except 'c' or 'C' for allowing the user to quit out to the menu. 
-	// Once entered, the user will be told "Password Accepted." and returned to the menu.
-	private void setPassword(){
-		
-	}
+	// Change the current user's password.
+	// The user must provide the old password first.
+	// If it matches, they may enter a new password.
+	// Enter 'c' or 'C' to cancel and return to the menu.
+	public void setPassword() {
+		while (true) {
+			System.out.print("Old Password ('c' or 'C' for Menu): ");
+			String oldPassword = sc.nextLine();
+			if (oldPassword.equalsIgnoreCase("c")) return;
 
+			if (user != null && user.check(user.getUsername(), oldPassword)) {
+				System.out.print("Please enter your new password: ");
+				String newPassword = sc.nextLine();
+
+				while (newPassword.equalsIgnoreCase("c")) {
+					System.out.println("Please choose a password other than 'c' or 'C'.");
+					System.out.print("Please enter your new password: ");
+					newPassword = sc.nextLine();
+				}
+
+				user.setPassword(oldPassword, newPassword);
+				System.out.println("Password Accepted.");
+				return;
+			}
+
+			System.out.println("Invalid Password, please re-enter.");
+			System.out.println();
+		}
+	}
 }
