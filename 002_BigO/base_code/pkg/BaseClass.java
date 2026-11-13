@@ -13,6 +13,7 @@ public class BaseClass {
 	}
 
 	public static boolean search(int[] arr) {
+		randomize(arr);
 		int target = (int)(Math.random() * 200001);
 		for (int i = 0; i < arr.length; i++) {
 			if (arr[i] == target) return true;
@@ -51,9 +52,7 @@ public class BaseClass {
 		for (int i = 0; i < arr.length - 1; i++) {
 			int min = i;
 			for (int j = i + 1; j < arr.length; j++) {
-				if (arr[j] < arr[min]) {
-					min = j;
-				}
+				if (arr[j] < arr[min]) min = j;
 			}
 			int a = arr[i];
 			arr[i] = arr[min];
