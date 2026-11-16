@@ -11,13 +11,13 @@ public class Node {
 		next = null;
 		this.data = data;
 	}
-	public void setNext(Node next){
+	public void setNext(Node next) {
 		this.next = next;
 	}
-	public int getData(){
+	public int getData() {
 		return data;
 	}	
-	public Node getNext(){
+	public Node getNext() {
 		return next;
 	}
 }
